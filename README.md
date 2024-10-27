@@ -5,9 +5,9 @@ This is a simple web application built with React, TypeScript, and Material-UI (
 ## Features
 
 - **Folder Selection**: Users can select a folder containing files and subfolders.
-- **Duplicate Detection**: The app calculates SHA-256 hashes for each file and identifies duplicates. (TBI)
+- **Duplicate Detection**: The app calculates SHA-256 hashes for each file and identifies duplicates.
 - **Upload Summary**: Displays the number of files and subfolders uploaded.
-- **Result Display**: Lists all duplicate files found within the selected folder. (TBI)
+- **Result Display**: Lists all duplicate files found within the selected folder.
 
 ## Technologies Used
 

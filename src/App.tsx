@@ -1,4 +1,4 @@
-import { Button, Container, Typography } from '@mui/material';
+import { Button, Container, List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
 import { styled } from '@mui/system';
 import { useState } from 'react';
 import DirectoryInput from './DirectoryInput';
@@ -8,10 +8,17 @@ const StyledContainer = styled(Container)({
   textAlign: 'center',
 });
 
+const StyledPaper = styled(Paper)({
+  padding: '1rem',
+  marginTop: '1rem',
+});
+
 const App: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileCount, setFileCount] = useState(0);
   const [folderCount, setFolderCount] = useState(0);
+  const [duplicates, setDuplicates] = useState<{ original: string; duplicate: string }[]>([]);
+  const [hasClickedFindDuplicates, setHasClickedFindDuplicates] = useState(false);
 
   const handleFolderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -29,11 +36,33 @@ const App: React.FC = () => {
       setFiles(filesArray);
       setFileCount(filesArray.length);
       setFolderCount(directories.size);
+      setHasClickedFindDuplicates(false);
     }
   };
 
-  const findDuplicates = () => {
-    // TODO: Find duplicates
+  const calculateHash = async (arrayBuffer: ArrayBuffer) => {
+    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  const findDuplicates = async () => {
+    const fileHashes: { [key: string]: string } = {};
+    const duplicates: { original: string; duplicate: string }[] = [];
+
+    for (const file of files) {
+      const arrayBuffer = await file.arrayBuffer();
+      const fileHash = await calculateHash(arrayBuffer);
+
+      if (fileHashes[fileHash]) {
+        duplicates.push({ original: fileHashes[fileHash], duplicate: file.name });
+      } else {
+        fileHashes[fileHash] = file.name;
+      }
+    }
+
+    setDuplicates(duplicates);
+    setHasClickedFindDuplicates(true);
   }
 
   return (
@@ -48,6 +77,26 @@ const App: React.FC = () => {
       <Typography variant="body1" style={{ marginTop: '1rem' }}>
         {fileCount} files in {folderCount} folders uploaded.
       </Typography>
+      {hasClickedFindDuplicates && (
+        <StyledPaper>
+          {duplicates.length > 0 ? (
+            <div>
+              <Typography variant="h6" gutterBottom>
+                Duplicates Found:
+              </Typography>
+              <List>
+                {duplicates.map((dup, index) => (
+                  <ListItem key={index}>
+                    <ListItemText primary={`${dup.duplicate} is a duplicate of ${dup.original}`} />
+                  </ListItem>
+                ))}
+              </List>
+            </div>
+          ) : (
+            <Typography variant="body1">No duplicates found.</Typography>
+          )}
+        </StyledPaper>
+      )}
     </StyledContainer>
   )
 }
